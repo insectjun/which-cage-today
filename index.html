@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Which Cage Today?</title>
+<meta name="description" content="Find which pupae cage dates give mosquitoes of the right age for today's experiment.">
+<meta name="theme-color" content="#2f6b4f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Which Cage">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column lab tool — settings strip, big answer card (which pupae dates to use), then a 7-day lookahead table */
+:root{
+  --bg:#f5f6f2; --surface:#ffffff; --fg:#1d2420; --muted:#66706a; --line:#dde1da;
+  --accent:#2f6b4f; --accent-soft:#e3efe8;
+  --ok:#2f7d4f; --ok-bg:#dff1e5;
+  --display:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1c2320; --fg:#e6ebe7; --muted:#97a39c; --line:#2d3631;
+  --accent:#7cc6a0; --accent-soft:#1f3329; --ok:#7fd3a0; --ok-bg:#1d3a2a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1c2320; --fg:#e6ebe7; --muted:#97a39c; --line:#2d3631;
+  --accent:#7cc6a0; --accent-soft:#1f3329; --ok:#7fd3a0; --ok-bg:#1d3a2a;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-size:1.6rem;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:1rem;margin:0}
+.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+input,button{font:inherit;color:inherit}
+input[type=date],input[type=number]{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0}
+input[type=number]{width:4.5em;font-family:var(--mono)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--surface);padding:7px 12px}
+.settings{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end;padding:14px 16px;background:var(--accent-soft);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.inline{display:flex;align-items:center;gap:6px;font-family:var(--mono)}
+
+.answer{background:var(--ok-bg);color:var(--ok);border-radius:12px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px}
+.answer .label{color:inherit;opacity:.85}
+.q{color:var(--fg);font-weight:500}
+.range{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 16px}
+.end{display:flex;flex-direction:column;gap:2px}
+.big{font-family:var(--display);font-size:2.2rem;font-weight:700;line-height:1.1;letter-spacing:-.01em;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}
+.arrow{font-size:1.8rem;line-height:1.25}
+.ndays{margin-left:auto;align-self:center;font-family:var(--mono);font-weight:600;font-size:.9rem;padding:3px 10px;border-radius:999px;background:var(--surface);color:var(--ok)}
+.detail{color:var(--fg);opacity:.8;font-size:.9rem;display:flex;flex-wrap:wrap;gap:4px 18px}
+.detail b{font-family:var(--mono);font-weight:600}
+
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--mono)}
+tr.is-ref td{background:var(--accent-soft);font-weight:600}
+.foot{font-size:.82rem;color:var(--muted);max-width:68ch;margin:0}
+.how{display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.rules{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px;max-width:66ch}
+.ex{display:flex;flex-direction:column;gap:6px}
+.tl-wrap{overflow-x:auto}
+.tl{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(58px,1fr);gap:3px;min-width:min-content}
+.tl li{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border-radius:6px;background:var(--bg);font-family:var(--mono);font-size:.75rem;color:var(--muted);text-align:center}
+.tl li .d{color:var(--fg);font-size:.82rem}
+.tl li.cage{background:var(--accent-soft);color:var(--accent)}
+.tl li.zero{background:var(--ok-bg);color:var(--ok);font-weight:600}
+@media (max-width:480px){.big{font-size:1.6rem}.ndays{margin-left:0}}
+</style>
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:15px}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Which Cage Today?</h1>
+    <p class="sub">Pick an experiment day and the age range you need. You get the pupae cage dates to pull from.</p>
+  </header>
+
+  <section class="settings" aria-label="Settings">
+    <div class="field">
+      <label class="label" for="ref">Experiment day</label>
+      <input type="date" id="ref">
+    </div>
+    <div class="field">
+      <span class="label">Usable age</span>
+      <span class="inline"><input type="number" id="maxAge" min="0" max="60" aria-label="Oldest usable age"> – <input type="number" id="minAge" min="0" max="60" placeholder="none" aria-label="Youngest usable age (optional)"> days</span>
+    </div>
+    <div class="field">
+      <label class="label" for="offset">Pupa → adult (days)</label>
+      <input type="number" id="offset" min="0" max="10">
+    </div>
+    <button type="button" id="today">Today</button>
+  </section>
+
+  <section class="answer" id="answer" aria-live="polite"></section>
+
+  <section style="display:flex;flex-direction:column;gap:8px">
+    <h2>Next 7 days</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Experiment day</th><th>Use pupae dated</th><th>Adults emerged</th></tr></thead>
+        <tbody id="week"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="how" aria-labelledby="how-h">
+    <h2 id="how-h">How age is counted</h2>
+    <ul class="rules">
+      <li><b>Day 0</b> is the day adults emerge (eclosion). The next day is day 1.</li>
+      <li>Pupae take <b id="offTxt">2 days</b> to emerge, so the cage date (when pupae went in) comes before day 0.</li>
+      <li>Adult age = experiment day − cage date − <span id="offTxt2">2</span>.</li>
+    </ul>
+    <div class="ex">
+      <span class="label">Example: cage started Tue, Oct 20</span>
+      <div class="tl-wrap"><ol class="tl" id="tl"></ol></div>
+    </div>
+    <p class="foot">Settings are saved in this browser only.</p>
+  </section>
+</div>
+
+<script>
+const DAY=86400000;
+const toDay=s=>{if(!s)return null;const[y,m,d]=s.split('-').map(Number);return Date.UTC(y,m-1,d)/DAY};
+const md=n=>{const t=new Date(n*DAY);return (t.getUTCMonth()+1)+'/'+t.getUTCDate()};
+const longDate=n=>new Date(n*DAY).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric',weekday:'short'});
+const todayStr=()=>{const t=new Date();return new Date(t.getTime()-t.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+
+const KEY='mosq-cage-age-v2';
+let state={ref:todayStr(),maxAge:8,minAge:3,offset:2};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)state={...state,...s,ref:todayStr()}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({maxAge:state.maxAge,minAge:state.minAge,offset:state.offset}))}catch(e){}};
+const $=id=>document.getElementById(id);
+const num=v=>v===''||isNaN(Number(v))?null:Math.max(0,Math.floor(Number(v)));
+const lo=()=>state.minAge==null?0:Math.min(state.minAge,state.maxAge);
+const rangeText=()=>state.minAge==null?`${state.maxAge} days old or younger`:`${state.maxAge}–${lo()} days old`;
+
+const refEl=$('ref'),maxEl=$('maxAge'),minEl=$('minAge'),offEl=$('offset');
+function sync(){refEl.value=state.ref;maxEl.value=state.maxAge;minEl.value=state.minAge==null?'':state.minAge;minEl.max=state.maxAge;offEl.value=state.offset}
+refEl.addEventListener('input',()=>{if(refEl.value){state.ref=refEl.value;render()}});
+offEl.addEventListener('input',()=>{const v=num(offEl.value);if(v!=null){state.offset=v;save();render()}});
+offEl.addEventListener('change',sync);
+minEl.addEventListener('input',()=>{
+  let mn=num(minEl.value);
+  if(mn!=null&&mn>state.maxAge){mn=state.maxAge;minEl.value=mn}
+  state.minAge=mn;save();render();
+});
+maxEl.addEventListener('input',()=>{const mx=num(maxEl.value);if(mx!=null){state.maxAge=mx;minEl.max=mx;save();render()}});
+maxEl.addEventListener('change',()=>{
+  if(state.minAge!=null&&state.minAge>state.maxAge)state.minAge=state.maxAge;
+  save();sync();render();
+});
+minEl.addEventListener('change',sync);
+$('today').onclick=()=>{state.ref=todayStr();sync();render()};
+
+// Experiment day r: pupa date p gives age r-p-off; age in [lo,max] -> p in [r-off-max, r-off-lo]
+function windowFor(r){
+  return {pFrom:r-state.offset-state.maxAge, pTo:r-state.offset-lo(), eFrom:r-state.maxAge, eTo:r-lo()};
+}
+
+let render;render=function(){
+  const r=toDay(state.ref), w=windowFor(r), n=w.pTo-w.pFrom+1;
+  $('answer').innerHTML=`
+    <span class="q">For <b>${longDate(r)}</b>, you need mosquitoes ${rangeText()}. Use pupae cages dated:</span>
+    <div class="range">
+      <div class="end"><span class="label">From</span><span class="big">${longDate(w.pFrom)}</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="end"><span class="label">To</span><span class="big">${longDate(w.pTo)}</span></div>
+      <span class="ndays">${n} day${n===1?'':'s'}</span>
+    </div>
+    <div class="detail"><span>Adults emerged <b>${md(w.eFrom)}–${md(w.eTo)}</b></span><span>A cage counts only if all its pupae dates fall inside this range.</span></div>`;
+  let rows='';
+  for(let i=0;i<7;i++){
+    const d=r+i, x=windowFor(d);
+    rows+=`<tr class="${i===0?'is-ref':''}"><td>${longDate(d)}</td><td class="mono">${md(x.pFrom)} – ${md(x.pTo)}</td><td class="mono">${md(x.eFrom)} – ${md(x.eTo)}</td></tr>`;
+  }
+  $('week').innerHTML=rows;
+}
+function renderHow(){
+  const off=state.offset;
+  $('offTxt').textContent=off+(off===1?' day':' days');
+  $('offTxt2').textContent=off;
+  const c=Date.UTC(2026,9,20)/DAY; let h='';
+  for(let i=0;i<=off+6;i++){
+    const d=c+i, age=i-off;
+    const cls=i===0?'cage':(age===0?'zero':'');
+    const tag=i===0&&off>0?'Cage start':(age<0?'Pupa':(age===0?'Day 0 · emerge':'Day '+age));
+    h+=`<li class="${cls}"><span class="d">${md(d)}</span><span>${i===0&&off===0?'Cage · Day 0':tag}</span></li>`;
+  }
+  $('tl').innerHTML=h;
+}
+const _render=render; render=function(){_render();renderHow()};
+sync();render();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+// Refresh "today" when the app comes back to the foreground on a new day
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){const t=todayStr();if(t!==state.ref&&typeof sync==='function'){state.ref=t;sync();render();}}});
+</script>
+</body>
+</html>
